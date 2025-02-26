@@ -48,6 +48,30 @@ const UploadScreen = () => {
       price: "$8.00",
       image: require("./assets/eco-straws.jpeg"),
     },
+    {
+      id: 5,
+      name: "Wooden Comb (bamboo)",
+      price: "$3.50",
+      image: require("./assets/wooden_comb.jpeg"),
+    },
+    {
+      id: 6,
+      name: "Wooden Razor For mens",
+      price: "$15.00",
+      image: require("./assets/razor.jpeg"),
+    },
+    {
+      id: 7,
+      name: "Wooden Plate",
+      price: "$5.00",
+      image: require("./assets/plate.jpeg"),
+    },
+    {
+      id: 8,
+      name: "Wooden Cup",
+      price: "$3.00",
+      image: require("./assets/cup.jpeg"),
+    },
   ];
 
   // Bouncing animation for the chatbot icon
@@ -332,7 +356,12 @@ const UploadScreen = () => {
                 Prediction: {JSON.stringify(prediction)}
               </Text>
             )}
-            <Button title="Close" onPress={() => setShowModal(false)} />
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowModal(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -645,6 +674,18 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 14,
     fontFamily: "Poppins",
+  },
+  closeButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  closeButtonText: {
+    color: "black", // Black text
+    fontSize: 16,
+    fontWeight: 600,
   },
 });
 
