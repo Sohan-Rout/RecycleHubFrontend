@@ -2,7 +2,7 @@
   "name": "client",
   "license": "0BSD",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.jsx",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -26,7 +26,9 @@
     "react-native": "0.76.7",
     "react-native-collapsible": "^1.6.2",
     "react-native-web": "~0.19.13",
-    "tailwind-react-native-classnames": "^3.0.1"
+    "tailwind-react-native-classnames": "^3.0.1",
+    "expo-linear-gradient": "~14.0.2",
+    "expo-location": "~18.0.7"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
