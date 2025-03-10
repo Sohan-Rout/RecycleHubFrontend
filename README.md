@@ -11,7 +11,7 @@
 <code>git clone https://github.com/yourusername/recyclehub-frontend.git  
 cd recyclehub-frontend  
 npm install  
-npm start  # or npm run dev (for Next.js)</code>
+npx expo start
 
 <h1>🔗 API Integration</h1>
 <p>The frontend fetches raw data from the RecycleHub Backend API, structures it, and presents a seamless user experience for tracking and managing recyclables.</p>
