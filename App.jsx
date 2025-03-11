@@ -21,8 +21,26 @@ import * as Location from "expo-location";
 import axios from "axios";
 import { useFonts, Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { LinearGradient } from "expo-linear-gradient";
+import { useNavigation } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import { NavigationContainer } from "@react-navigation/native";
+import CartScreen from "./CartScreen";
+
+const Stack = createStackNavigator();
+
+const App = () => {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="">
+        <Stack.Screen name="Upload" component={UploadScreen} options={{ headerShown: false }}/>
+        <Stack.Screen name="CartScreen" component={CartScreen} options={{ headerShown: false }}/>
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
 
 const UploadScreen = () => {
+  const navigation = useNavigation();
   const [imageUri, setImageUri] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showScannerOptionsModal, setShowScannerOptionsModal] = useState(false);
@@ -34,6 +52,8 @@ const UploadScreen = () => {
   const [location, setLocation] = useState(null);
   const [customAddress, setCustomAddress] = useState("");
   const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
+  const [quantities, setQuantities] = useState({});
   const chatbotBounce = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -53,6 +73,48 @@ const UploadScreen = () => {
     { id: 7, name: "Wooden Plate", price: "$5.00", image: require("./assets/plate.jpeg") },
     { id: 8, name: "Wooden Cup", price: "$3.00", image: require("./assets/cup.jpeg") },
   ];
+
+  const handleAddToCart = (item) => {
+    setQuantities((prev) => ({
+      ...prev,
+      [item.id]: (prev[item.id] || 0) + 1,
+    }));
+    setCartItems((prev) => {
+      const existingItem = prev.find((cartItem) => cartItem.id === item.id);
+      if (existingItem) {
+        return prev.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem
+        );
+      }
+      return [...prev, { ...item, quantity: 1 }];
+    });
+  };
+
+  const handleQuantityChange = (item, delta) => {
+    const newQuantity = (quantities[item.id] || 0) + delta;
+    if (newQuantity >= 0) {
+      setQuantities((prev) => ({
+        ...prev,
+        [item.id]: newQuantity,
+      }));
+      setCartItems((prev) => {
+        if (newQuantity === 0) {
+          return prev.filter((cartItem) => cartItem.id !== item.id);
+        }
+        return prev.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: newQuantity }
+            : cartItem
+        );
+      });
+    }
+  };
+
+  const navigateToCart = () => {
+    navigation.navigate("CartScreen", { cartItems });
+  };
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -160,9 +222,30 @@ const UploadScreen = () => {
       <Image source={item.image} style={styles.productImage} />
       <Text style={styles.productName}>{item.name}</Text>
       <Text style={styles.productPrice}>{item.price}</Text>
-      <TouchableOpacity style={styles.buyButton}>
-        <Text style={styles.buyButtonText}>Add</Text>
-      </TouchableOpacity>
+      {quantities[item.id] > 0 ? (
+        <View style={styles.quantityContainer}>
+          <TouchableOpacity
+            style={styles.quantityButton}
+            onPress={() => handleQuantityChange(item, -1)}
+          >
+            <Text style={styles.quantityButtonText}>-</Text>
+          </TouchableOpacity>
+          <Text style={styles.quantityText}>{quantities[item.id]}</Text>
+          <TouchableOpacity
+            style={styles.quantityButton}
+            onPress={() => handleQuantityChange(item, 1)}
+          >
+            <Text style={styles.quantityButtonText}>+</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={styles.buyButton}
+          onPress={() => handleAddToCart(item)}
+        >
+          <Text style={styles.buyButtonText}>Add</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -170,7 +253,6 @@ const UploadScreen = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#E0E7EF" translucent={true} />
 
-      {/* Fixed Header with Search Bar and Location Button */}
       <LinearGradient colors={["#E0E7EF", "#D1DAE5"]} style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.searchContainer}>
@@ -222,7 +304,7 @@ const UploadScreen = () => {
               </TouchableOpacity>
             </View>
           )}
-          <Text style peeked={styles.greetingText}>{greeting}</Text>
+          <Text style={styles.greetingText}>{greeting}</Text>
           <Text style={styles.counterText}>Items Scanned</Text>
           <Text style={styles.counterNumber}>{itemsScanned}</Text>
           <Text style={styles.dateText}>{getCurrentDate()}</Text>
@@ -264,7 +346,17 @@ const UploadScreen = () => {
         </View>
 
         <View style={styles.shopSection}>
-          <Text style={styles.shopSectionTitle}>Eco Shop</Text>
+          <View style={styles.shopHeader}>
+            <Text style={styles.shopSectionTitle}>Eco Shop</Text>
+            <TouchableOpacity onPress={navigateToCart}>
+              <MaterialIcons name="shopping-cart" size={28} color="#10B981" />
+              {cartItems.length > 0 && (
+                <View style={styles.cartBadge}>
+                  <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
           <FlatList
             data={ecoFriendlyProducts}
             renderItem={renderProductItem}
@@ -323,7 +415,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F4F6",
   },
   header: {
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 40,
     paddingBottom: 10,
     paddingHorizontal: 20,
     zIndex: 10,
@@ -340,7 +432,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
     paddingHorizontal: 12,
-    height: 40, // Match locationButton height
+    height: 40,
     marginRight: 15,
     elevation: 3,
   },
@@ -384,7 +476,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   addressInput: {
-    fontSize: 14,
+    fontSize: 15,
     color: "#111827",
     fontFamily: "Poppins",
     borderBottomWidth: 1,
@@ -394,10 +486,10 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   greetingText: {
-    fontSize: 24,
-    color: "#111827",
-    fontFamily: "PoppinsBold",
-    marginBottom: 4,
+    fontSize: 25,
+    color: "#000000",
+    fontFamily: "Poppins",
+    marginBottom: 0,
   },
   counterText: {
     fontSize: 18,
@@ -438,7 +530,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    minHeight: 300, // Increased height to provide more space
+    minHeight: 300,
   },
   scannerSpace: {
     width: 180,
@@ -450,7 +542,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#10B981",
     elevation: 3,
-    marginBottom: 20, // Added spacing below camera option
+    marginBottom: 20,
   },
   imageAddedContainer: {
     flexDirection: "row",
@@ -468,7 +560,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 10,
     paddingHorizontal: 30,
-    marginTop: 20, // Added margin to move the button lower
+    marginTop: 20,
   },
   uploadButtonText: {
     fontSize: 16,
@@ -484,6 +576,53 @@ const styles = StyleSheet.create({
     color: "#111827",
     fontFamily: "PoppinsBold",
     marginBottom: 12,
+  },
+  shopHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  cartBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#EF4444",
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cartBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontFamily: "PoppinsSemiBold",
+  },
+  quantityContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: 8,
+  },
+  quantityButton: {
+    backgroundColor: "#10B981",
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  quantityButtonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontFamily: "PoppinsBold",
+  },
+  quantityText: {
+    fontSize: 16,
+    color: "#111827",
+    fontFamily: "PoppinsSemiBold",
   },
   productGrid: {
     paddingBottom: 20,
@@ -614,4 +753,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UploadScreen;
+export default App;
