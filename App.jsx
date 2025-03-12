@@ -21,26 +21,34 @@ import * as Location from "expo-location";
 import axios from "axios";
 import { useFonts, Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
 import { NavigationContainer } from "@react-navigation/native";
-import CartScreen from "./CartScreen";
+import { createStackNavigator } from "@react-navigation/stack";
 
+// Create the stack navigator
 const Stack = createStackNavigator();
 
+// Main App component
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="">
-        <Stack.Screen name="Upload" component={UploadScreen} options={{ headerShown: false }}/>
-        <Stack.Screen name="CartScreen" component={CartScreen} options={{ headerShown: false }}/>
+      <Stack.Navigator initialRouteName="Upload">
+        <Stack.Screen
+          name="Upload"
+          component={UploadScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="CartScreen"
+          component={CartScreen}
+          options={{ headerShown: false }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
 
-const UploadScreen = () => {
-  const navigation = useNavigation();
+// UploadScreen component
+const UploadScreen = ({ navigation }) => {
   const [imageUri, setImageUri] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showScannerOptionsModal, setShowScannerOptionsModal] = useState(false);
@@ -415,12 +423,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F4F6",
   },
   header: {
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 40,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 30,
     paddingBottom: 10,
     paddingHorizontal: 20,
     zIndex: 10,
   },
   headerContent: {
+    paddingTop: 5,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -432,7 +441,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
     paddingHorizontal: 12,
-    height: 40,
+    height: 45,
     marginRight: 15,
     elevation: 3,
   },
@@ -455,7 +464,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   scrollContainer: {
-    paddingTop: 50,
+    paddingTop: 20,
     paddingBottom: 80,
   },
   counterContainer: {
@@ -752,5 +761,16 @@ const styles = StyleSheet.create({
     fontFamily: "PoppinsBold",
   },
 });
+
+// CartScreen component (dummy implementation)
+const CartScreen = ({ route }) => {
+  const { cartItems } = route.params;
+  return (
+    <View style={styles.container}>
+      <Text>Cart Screen</Text>
+      <Text>{JSON.stringify(cartItems)}</Text>
+    </View>
+  );
+};
 
 export default App;
