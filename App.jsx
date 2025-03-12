@@ -214,7 +214,7 @@ const UploadScreen = ({ navigation }) => {
       );
 
       setPrediction(response.data.prediction);
-      Alert.alert("✅ Upload Success", `Filename: ${response.data.filename}\nPrediction: ${JSON.stringify(response.data.prediction)}`);
+      Alert.alert("Result", `Filename: ${response.data.filename}\nPrediction: ${JSON.stringify(response.data.prediction)}`);
     } catch (error) {
       console.error("❌ Upload Failed:", error.response?.data || error.message);
       Alert.alert("Upload Failed!", "Something went wrong. Try again.");
@@ -259,12 +259,21 @@ const UploadScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#E0E7EF" translucent={true} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#E0E7EF"
+        translucent={true}
+      />
 
       <LinearGradient colors={["#E0E7EF", "#D1DAE5"]} style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.searchContainer}>
-            <MaterialIcons name="search" size={20} color="#6B7280" style={styles.searchIcon} />
+            <MaterialIcons
+              name="search"
+              size={20}
+              color="#6B7280"
+              style={styles.searchIcon}
+            />
             <TextInput
               style={styles.searchInput}
               placeholder="Search products..."
@@ -273,7 +282,10 @@ const UploadScreen = ({ navigation }) => {
               onChangeText={setSearchQuery}
             />
           </View>
-          <TouchableOpacity style={styles.locationButton} onPress={requestLocationPermission}>
+          <TouchableOpacity
+            style={styles.locationButton}
+            onPress={requestLocationPermission}
+          >
             <MaterialIcons name="location-on" size={24} color="#10B981" />
           </TouchableOpacity>
         </View>
@@ -301,9 +313,13 @@ const UploadScreen = ({ navigation }) => {
                   placeholderTextColor="#6B7280"
                 />
               ) : (
-                <Text style={styles.locationText}>{customAddress || "Fetching..."}</Text>
+                <Text style={styles.locationText}>
+                  {customAddress || "Fetching..."}
+                </Text>
               )}
-              <TouchableOpacity onPress={() => setIsEditingAddress(!isEditingAddress)}>
+              <TouchableOpacity
+                onPress={() => setIsEditingAddress(!isEditingAddress)}
+              >
                 <MaterialIcons
                   name={isEditingAddress ? "check" : "edit"}
                   size={18}
@@ -346,7 +362,10 @@ const UploadScreen = ({ navigation }) => {
                   </TouchableOpacity>
                 </View>
               )}
-              <TouchableOpacity style={styles.uploadButton} onPress={uploadImage}>
+              <TouchableOpacity
+                style={styles.uploadButton}
+                onPress={uploadImage}
+              >
                 <Text style={styles.uploadButtonText}>Upload</Text>
               </TouchableOpacity>
             </View>
@@ -376,32 +395,58 @@ const UploadScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
-      <Animated.View style={[styles.chatbotIconContainer, { transform: [{ translateY: chatbotBounce }] }]}>
+      <Animated.View
+        style={[
+          styles.chatbotIconContainer,
+          { transform: [{ translateY: chatbotBounce }] },
+        ]}
+      >
         <TouchableOpacity onPress={() => setShowModal(true)}>
-          <MaterialIcons name="chat-bubble" size={32} color="#FFFFFF" />
+          <MaterialIcons name="smart-toy" size={32} color="#FFFFFF" />
         </TouchableOpacity>
       </Animated.View>
 
       <Modal visible={showModal} transparent animationType="fade">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>AI Recycler</Text>
-            {prediction && <Text style={styles.modalText}>Prediction: {JSON.stringify(prediction)}</Text>}
-            <TouchableOpacity style={styles.closeButton} onPress={() => setShowModal(false)}>
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+    <View style={styles.modalContainer} onPress={() => setShowModal(false)}>
+      <View style={styles.modalContent}>
+        <Text style={styles.modalTitle}>AI Recycler</Text>
+        {prediction && (
+          <ScrollView
+            contentContainerStyle={styles.scrollContent} // Ensures content is scrollable
+          >
+            <Text style={styles.modalText}>
+              Prediction: {JSON.stringify(prediction)}
+            </Text>
+          </ScrollView>
+        )}
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => setShowModal(false)}
+        >
+          <Text style={styles.closeButtonText}>Close</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+</Modal>
 
-      <Modal visible={showScannerOptionsModal} transparent animationType="slide">
+      <Modal
+        visible={showScannerOptionsModal}
+        transparent
+        animationType="slide"
+      >
         <View style={styles.modalContainer}>
           <View style={styles.scannerOptionsModalContent}>
             <Text style={styles.modalTitle}>Select Option</Text>
-            <TouchableOpacity style={styles.scannerOptionButton} onPress={pickImage}>
+            <TouchableOpacity
+              style={styles.scannerOptionButton}
+              onPress={pickImage}
+            >
               <Text style={styles.scannerOptionText}>Gallery</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.scannerOptionButton} onPress={takePhoto}>
+            <TouchableOpacity
+              style={styles.scannerOptionButton}
+              onPress={takePhoto}
+            >
               <Text style={styles.scannerOptionText}>Camera</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -689,17 +734,22 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   modalContainer: {
-    flex: 1,
-    justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    width: "90%", // Constant width for the modal container
+    maxWidth: 400, // Optional: Set a maximum width for larger screens
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    maxHeight: "80%", // Ensures the modal doesn't take up the entire screen
   },
   modalContent: {
-    width: "90%",
-    borderRadius: 20,
+    width: "100%",
     padding: 25,
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+  },
+  scrollContent: {
+    flexGrow: 1, // Ensures the ScrollView takes up available space
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 24,
@@ -719,6 +769,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingVertical: 12,
     paddingHorizontal: 30,
+    marginTop: 20, // Adds spacing between content and button
   },
   closeButtonText: {
     fontSize: 18,
