@@ -13,6 +13,7 @@ import {
   TextInput,
   Alert,
   Platform,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import Collapsible from "react-native-collapsible";
@@ -24,6 +25,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import Navigation from "./Navigation"; // Import the Navigation component
+import CartScreen from "./CartScreen"; // Import the CartScreen component
 
 // Create the stack navigator
 const Stack = createStackNavigator();
@@ -411,27 +413,27 @@ const UploadScreen = ({ navigation }) => {
       </Animated.View>
 
       <Modal visible={showModal} transparent animationType="fade">
-    <View style={styles.modalContainer} onPress={() => setShowModal(false)}>
-      <View style={styles.modalContent}>
-        <Text style={styles.modalTitle}>AI Recycler</Text>
-        {prediction && (
-          <ScrollView
-            contentContainerStyle={styles.scrollContent} // Ensures content is scrollable
-          >
-            <Text style={styles.modalText}>
-              Prediction: {JSON.stringify(prediction)}
-            </Text>
-          </ScrollView>
-        )}
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => setShowModal(false)}
-        >
-          <Text style={styles.closeButtonText}>Close</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-</Modal>
+        <TouchableWithoutFeedback onPress={() => setShowModal(false)}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>AI Recycler</Text>
+              {prediction && (
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                  <Text style={styles.modalText}>
+                    Prediction: {JSON.stringify(prediction)}
+                  </Text>
+                </ScrollView>
+              )}
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowModal(false)}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
 
       <Modal
         visible={showScannerOptionsModal}
@@ -739,20 +741,20 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   modalContainer: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    width: "90%", // Constant width for the modal container
-    maxWidth: 400, // Optional: Set a maximum width for larger screens
-    borderRadius: 20,
-    backgroundColor: "#FFFFFF",
-    maxHeight: "80%", // Ensures the modal doesn't take up the entire screen
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    width: "100%",
+    width: "90%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
     padding: 25,
     alignItems: "center",
   },
   scrollContent: {
-    flexGrow: 1, // Ensures the ScrollView takes up available space
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -774,7 +776,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingVertical: 12,
     paddingHorizontal: 30,
-    marginTop: 20, // Adds spacing between content and button
+    marginTop: 20,
   },
   closeButtonText: {
     fontSize: 18,
@@ -817,16 +819,5 @@ const styles = StyleSheet.create({
     fontFamily: "PoppinsBold",
   },
 });
-
-// CartScreen component (dummy implementation)
-const CartScreen = ({ route }) => {
-  const { cartItems } = route.params;
-  return (
-    <View style={styles.container}>
-      <Text>Cart Screen</Text>
-      <Text>{JSON.stringify(cartItems)}</Text>
-    </View>
-  );
-};
 
 export default App;

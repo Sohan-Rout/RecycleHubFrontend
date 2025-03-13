@@ -2,14 +2,17 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
-const Navigation = () => {
+const Navigation = ({ navigation }) => {
   return (
     <View style={styles.navigationContainer}>
       <TouchableOpacity style={styles.navItem}>
         <MaterialIcons name="home" size={24} color="#10B981" />
         <Text style={styles.navText}>Home</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.navItem}>
+      <TouchableOpacity
+        style={styles.navItem}
+        onPress={() => navigation.navigate("CartScreen", { cartItems })}
+      >
         <MaterialIcons name="shopping-cart" size={24} color="#10B981" />
         <Text style={styles.navText}>Cart</Text>
       </TouchableOpacity>
