@@ -23,6 +23,7 @@ import { useFonts, Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold } fr
 import { LinearGradient } from "expo-linear-gradient";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
+import Navigation from "./Navigation"; // Import the Navigation component
 
 // Create the stack navigator
 const Stack = createStackNavigator();
@@ -395,6 +396,9 @@ const UploadScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
+      {/* Add the Navigation component here */}
+      <Navigation />
+
       <Animated.View
         style={[
           styles.chatbotIconContainer,
@@ -462,6 +466,7 @@ const UploadScreen = ({ navigation }) => {
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -723,7 +728,7 @@ const styles = StyleSheet.create({
   },
   chatbotIconContainer: {
     position: "absolute",
-    bottom: 20,
+    bottom: 80,
     right: 20,
     width: 60,
     height: 60,
