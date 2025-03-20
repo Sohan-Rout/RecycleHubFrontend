@@ -175,37 +175,41 @@ const HomeScreen = ({ navigation }) => {
 
   if (!fontsLoaded) return null;
 
-  const renderProductItem = ({ item }) => (
-    <View style={styles.productItem}>
-      <Image source={{ uri: item.image }} style={styles.productImage} />
-      <Text style={styles.productName}>{item.name}</Text>
-      <Text style={styles.productPrice}>${item.price}</Text>
-      {quantities[item.id] > 0 ? (
-        <View style={styles.quantityContainer}>
+  const renderProductItem = ({ item }) => {
+    const itemQuantity = quantities[item._id] || 0; // Get the quantity for this item
+
+    return (
+      <View style={styles.productItem}>
+        <Image source={{ uri: item.image }} style={styles.productImage} />
+        <Text style={styles.productName}>{item.name}</Text>
+        <Text style={styles.productPrice}>${item.price}</Text>
+        {itemQuantity > 0 ? (
+          <View style={styles.quantityContainer}>
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() => handleQuantityChange(item, -1)}
+            >
+              <Text style={styles.quantityButtonText}>-</Text>
+            </TouchableOpacity>
+            <Text style={styles.quantityText}>{itemQuantity}</Text>
+            <TouchableOpacity
+              style={styles.quantityButton}
+              onPress={() => handleQuantityChange(item, 1)}
+            >
+              <Text style={styles.quantityButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
           <TouchableOpacity
-            style={styles.quantityButton}
-            onPress={() => handleQuantityChange(item, -1)}
+            style={styles.buyButton}
+            onPress={() => handleAddToCart(item)}
           >
-            <Text style={styles.quantityButtonText}>-</Text>
+            <Text style={styles.buyButtonText}>Add</Text>
           </TouchableOpacity>
-          <Text style={styles.quantityText}>{quantities[item.id]}</Text>
-          <TouchableOpacity
-            style={styles.quantityButton}
-            onPress={() => handleQuantityChange(item, 1)}
-          >
-            <Text style={styles.quantityButtonText}>+</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <TouchableOpacity
-          style={styles.buyButton}
-          onPress={() => handleAddToCart(item)}
-        >
-          <Text style={styles.buyButtonText}>Add</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+        )}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -214,7 +218,7 @@ const HomeScreen = ({ navigation }) => {
         backgroundColor="#E0E7EF"
         translucent={true}
       />
-
+  
       <LinearGradient colors={["#E0E7EF", "#D1DAE5"]} style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.searchContainer}>
@@ -240,117 +244,111 @@ const HomeScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </LinearGradient>
-
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        scrollEventThrottle={16}
-        onScroll={({ nativeEvent }) => {
-          scrollY.setValue(nativeEvent.contentOffset.y);
-        }}
-      >
-        <View style={styles.counterContainer}>
-          {(location || customAddress) && (
-            <View style={styles.locationRow}>
-              <MaterialIcons name="location-pin" size={18} color="#10B981" />
-              {isEditingAddress ? (
-                <TextInput
-                  style={styles.addressInput}
-                  value={customAddress}
-                  onChangeText={setCustomAddress}
-                  onSubmitEditing={handleSaveAddress}
-                  autoFocus={true}
-                  placeholder="Enter your address"
-                  placeholderTextColor="#6B7280"
-                />
-              ) : (
-                <Text style={styles.locationText}>
-                  {customAddress || "Fetching..."}
-                </Text>
-              )}
-              <TouchableOpacity
-                onPress={() => setIsEditingAddress(!isEditingAddress)}
-              >
-                <MaterialIcons
-                  name={isEditingAddress ? "check" : "edit"}
-                  size={18}
-                  color="#10B981"
-                />
-              </TouchableOpacity>
-            </View>
-          )}
-          <Text style={styles.greetingText}>{greeting}</Text>
-          <Text style={styles.counterText}>Items Scanned</Text>
-          <Text style={styles.counterNumber}>{itemsScanned}</Text>
-          <Text style={styles.dateText}>{getCurrentDate()}</Text>
-        </View>
-
-        <View style={styles.scannerSection}>
-          <TouchableOpacity
-            style={styles.collapsibleHeader}
-            onPress={() => setIsScannerCollapsed(!isScannerCollapsed)}
-          >
-            <Text style={styles.collapsibleHeaderText}>Scan Item</Text>
-            <MaterialIcons
-              name={isScannerCollapsed ? "expand-more" : "expand-less"}
-              size={28}
-              color="#10B981"
-            />
-          </TouchableOpacity>
-          <Collapsible collapsed={isScannerCollapsed}>
-            <View style={styles.scannerContainer}>
-              <TouchableOpacity
-                style={styles.scannerSpace}
-                onPress={() => setShowScannerOptionsModal(true)}
-              >
-                <MaterialIcons name="camera-alt" size={48} color="#10B981" />
-              </TouchableOpacity>
-              {imageUri && (
-                <View style={styles.imageAddedContainer}>
-                  <Text style={styles.imageAddedText}>Image Ready</Text>
-                  <TouchableOpacity onPress={removeImage}>
-                    <MaterialIcons name="delete" size={24} color="#EF4444" />
-                  </TouchableOpacity>
-                </View>
-              )}
-              <TouchableOpacity
-                style={styles.uploadButton}
-                onPress={uploadImage}
-              >
-                <Text style={styles.uploadButtonText}>Upload</Text>
-              </TouchableOpacity>
-            </View>
-          </Collapsible>
-        </View>
-
-        <View style={styles.shopSection}>
-          <View style={styles.shopHeader}>
-            <Text style={styles.shopSectionTitle}>Eco Shop</Text>
-            <TouchableOpacity onPress={navigateToCart}>
-              <MaterialIcons name="shopping-cart" size={28} color="#10B981" />
-              {cartItems.length > 0 && (
-                <View style={styles.cartBadge}>
-                  <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
-                </View>
-              )}
+  
+      {/* Non-scrollable content */}
+      <View style={styles.counterContainer}>
+        {(location || customAddress) && (
+          <View style={styles.locationRow}>
+            <MaterialIcons name="location-pin" size={18} color="#10B981" />
+            {isEditingAddress ? (
+              <TextInput
+                style={styles.addressInput}
+                value={customAddress}
+                onChangeText={setCustomAddress}
+                onSubmitEditing={handleSaveAddress}
+                autoFocus={true}
+                placeholder="Enter your address"
+                placeholderTextColor="#6B7280"
+              />
+            ) : (
+              <Text style={styles.locationText}>
+                {customAddress || "Fetching..."}
+              </Text>
+            )}
+            <TouchableOpacity
+              onPress={() => setIsEditingAddress(!isEditingAddress)}
+            >
+              <MaterialIcons
+                name={isEditingAddress ? "check" : "edit"}
+                size={18}
+                color="#10B981"
+              />
             </TouchableOpacity>
           </View>
-          {products.length > 0 ? (
-            <FlatList
-              data={products}
-              renderItem={renderProductItem}
-              keyExtractor={(item) => item._id.toString()}
-              numColumns={3}
-              contentContainerStyle={styles.productGrid}
-              showsVerticalScrollIndicator={false}
-            />
-          ) : (
-            <Text style={styles.noProductsText}>No products to show here.</Text>
-          )}
+        )}
+        <Text style={styles.greetingText}>{greeting}</Text>
+        <Text style={styles.counterText}>Items Scanned</Text>
+        <Text style={styles.counterNumber}>{itemsScanned}</Text>
+        <Text style={styles.dateText}>{getCurrentDate()}</Text>
+      </View>
+  
+      <View style={styles.scannerSection}>
+        <TouchableOpacity
+          style={styles.collapsibleHeader}
+          onPress={() => setIsScannerCollapsed(!isScannerCollapsed)}
+        >
+          <Text style={styles.collapsibleHeaderText}>Scan Item</Text>
+          <MaterialIcons
+            name={isScannerCollapsed ? "expand-more" : "expand-less"}
+            size={28}
+            color="#10B981"
+          />
+        </TouchableOpacity>
+        <Collapsible collapsed={isScannerCollapsed}>
+          <View style={styles.scannerContainer}>
+            <TouchableOpacity
+              style={styles.scannerSpace}
+              onPress={() => setShowScannerOptionsModal(true)}
+            >
+              <MaterialIcons name="camera-alt" size={48} color="#10B981" />
+            </TouchableOpacity>
+            {imageUri && (
+              <View style={styles.imageAddedContainer}>
+                <Text style={styles.imageAddedText}>Image Ready</Text>
+                <TouchableOpacity onPress={removeImage}>
+                  <MaterialIcons name="delete" size={24} color="#EF4444" />
+                </TouchableOpacity>
+              </View>
+            )}
+            <TouchableOpacity
+              style={styles.uploadButton}
+              onPress={uploadImage}
+            >
+              <Text style={styles.uploadButtonText}>Upload</Text>
+            </TouchableOpacity>
+          </View>
+        </Collapsible>
+      </View>
+  
+      {/* Scrollable content (products) */}
+      <View style={styles.shopSection}>
+        <View style={styles.shopHeader}>
+          <Text style={styles.shopSectionTitle}>Eco Shop</Text>
+          <TouchableOpacity onPress={navigateToCart}>
+            <MaterialIcons name="shopping-cart" size={28} color="#10B981" />
+            {cartItems.length > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
-      </ScrollView>
-
+        {products.length > 0 ? (
+          <FlatList
+            data={products}
+            renderItem={renderProductItem}
+            keyExtractor={(item) => item._id.toString()}
+            numColumns={3}
+            contentContainerStyle={styles.productGrid}
+            showsVerticalScrollIndicator={false}
+          />
+        ) : (
+          <Text style={styles.noProductsText}>No products to show here.</Text>
+        )}
+      </View>
+  
       <Navigation />
-
+  
       <Animated.View
         style={[
           styles.chatbotIconContainer,
@@ -361,7 +359,7 @@ const HomeScreen = ({ navigation }) => {
           <MaterialIcons name="smart-toy" size={32} color="#FFFFFF" />
         </TouchableOpacity>
       </Animated.View>
-
+  
       <Modal visible={showModal} transparent animationType="fade">
         <TouchableWithoutFeedback onPress={() => setShowModal(false)}>
           <View style={styles.modalContainer}>
@@ -384,7 +382,7 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-
+  
       <Modal
         visible={showScannerOptionsModal}
         transparent
