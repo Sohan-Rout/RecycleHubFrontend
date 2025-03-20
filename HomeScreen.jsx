@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from "react"; // Import useContext
+import React, { useState, useEffect, useRef, useContext } from "react";
 import {
   View,
   Text,
@@ -22,22 +22,23 @@ import * as Location from "expo-location";
 import axios from "axios";
 import { useFonts, Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { LinearGradient } from "expo-linear-gradient";
-import { CartContext } from "./CartContext"; // Import the CartContext
+import { CartContext } from "./CartContext";
 import Navigation from "./Navigation";
 
 const HomeScreen = ({ navigation }) => {
-    const { cartItems, quantities, addToCart, updateQuantity } = useContext(CartContext); // Use the CartContext // Use the CartContext
-    const [imageUri, setImageUri] = useState(null);
-    const [showModal, setShowModal] = useState(false);
-    const [showScannerOptionsModal, setShowScannerOptionsModal] = useState(false);
-    const [isScannerCollapsed, setIsScannerCollapsed] = useState(true);
-    const [prediction, setPrediction] = useState(null);
+  const { cartItems, quantities, addToCart, updateQuantity } = useContext(CartContext);
+  const [imageUri, setImageUri] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [showScannerOptionsModal, setShowScannerOptionsModal] = useState(false);
+  const [isScannerCollapsed, setIsScannerCollapsed] = useState(true);
+  const [prediction, setPrediction] = useState(null);
   const [itemsScanned, setItemsScanned] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [greeting, setGreeting] = useState("");
   const [location, setLocation] = useState(null);
   const [customAddress, setCustomAddress] = useState("");
   const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [products, setProducts] = useState([]); // State to hold fetched products
   const chatbotBounce = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -47,23 +48,26 @@ const HomeScreen = ({ navigation }) => {
     PoppinsBold: Poppins_700Bold,
   });
 
-  const ecoFriendlyProducts = [
-    { id: 1, name: "Bamboo Toothbrush", price: "$5.00", image: require("./assets/bamboo-toothbrush.jpeg") },
-    { id: 2, name: "Reusable Water Bottle", price: "$15.00", image: require("./assets/reusable-bottle.jpeg") },
-    { id: 3, name: "Organic Cotton Tote Bag", price: "$10.00", image: require("./assets/tote-bag.jpeg") },
-    { id: 4, name: "Eco-Friendly Straws", price: "$8.00", image: require("./assets/eco-straws.jpeg") },
-    { id: 5, name: "Wooden Comb (Bamboo)", price: "$3.50", image: require("./assets/wooden_comb.jpeg") },
-    { id: 6, name: "Wooden Razor For Men", price: "$15.00", image: require("./assets/razor.jpeg") },
-    { id: 7, name: "Wooden Plate", price: "$5.00", image: require("./assets/plate.jpeg") },
-    { id: 8, name: "Wooden Cup", price: "$3.00", image: require("./assets/cup.jpeg") },
-  ];
+  useEffect(() => {
+    fetchProducts(); // Fetch products when the component mounts
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get("https://recyclehub.onrender.com/api/products");
+      setProducts(response.data); // Set the fetched products to state
+    } catch (error) {
+      console.error("❌ Failed to fetch products:", error);
+      Alert.alert("Error", "Failed to fetch products. Please try again later.");
+    }
+  };
 
   const handleAddToCart = (item) => {
-    addToCart(item); // Use the global addToCart function
+    addToCart(item);
   };
 
   const handleQuantityChange = (item, delta) => {
-    updateQuantity(item, delta); // Use the global updateQuantity function
+    updateQuantity(item, delta);
   };
 
   const navigateToCart = () => {
@@ -83,7 +87,6 @@ const HomeScreen = ({ navigation }) => {
       ])
     ).start();
   }, []);
-
 
   const requestLocationPermission = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -174,10 +177,10 @@ const HomeScreen = ({ navigation }) => {
 
   const renderProductItem = ({ item }) => (
     <View style={styles.productItem}>
-      <Image source={item.image} style={styles.productImage} />
+      <Image source={{ uri: item.image }} style={styles.productImage} />
       <Text style={styles.productName}>{item.name}</Text>
-      <Text style={styles.productPrice}>{item.price}</Text>
-      {quantities[item.id] > 0 ? ( // Use quantities from CartContext
+      <Text style={styles.productPrice}>${item.price}</Text>
+      {quantities[item.id] > 0 ? (
         <View style={styles.quantityContainer}>
           <TouchableOpacity
             style={styles.quantityButton}
@@ -331,18 +334,21 @@ const HomeScreen = ({ navigation }) => {
               )}
             </TouchableOpacity>
           </View>
-          <FlatList
-            data={ecoFriendlyProducts}
-            renderItem={renderProductItem}
-            keyExtractor={(item) => item.id.toString()}
-            numColumns={3}
-            contentContainerStyle={styles.productGrid}
-            showsVerticalScrollIndicator={false}
-          />
+          {products.length > 0 ? (
+            <FlatList
+              data={products}
+              renderItem={renderProductItem}
+              keyExtractor={(item) => item._id.toString()}
+              numColumns={3}
+              contentContainerStyle={styles.productGrid}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <Text style={styles.noProductsText}>No products to show here.</Text>
+          )}
         </View>
       </ScrollView>
 
-      {/* Added bottom navbar here*/}
       <Navigation />
 
       <Animated.View
