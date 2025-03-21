@@ -38,7 +38,8 @@ const HomeScreen = ({ navigation }) => {
   const [location, setLocation] = useState(null);
   const [customAddress, setCustomAddress] = useState("");
   const [isEditingAddress, setIsEditingAddress] = useState(false);
-  const [products, setProducts] = useState([]); // State to hold fetched products
+  const [products, setProducts] = useState([]);
+  const [showPickupModal, setShowPickupModal] = useState(false); // New state for pickup modal
   const chatbotBounce = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -49,13 +50,13 @@ const HomeScreen = ({ navigation }) => {
   });
 
   useEffect(() => {
-    fetchProducts(); // Fetch products when the component mounts
+    fetchProducts();
   }, []);
 
   const fetchProducts = async () => {
     try {
       const response = await axios.get("https://recyclehub.onrender.com/api/products");
-      setProducts(response.data); // Set the fetched products to state
+      setProducts(response.data);
     } catch (error) {
       console.error("❌ Failed to fetch products:", error);
       Alert.alert("Error", "Failed to fetch products. Please try again later.");
@@ -163,8 +164,19 @@ const HomeScreen = ({ navigation }) => {
         }
       );
 
-      setPrediction(response.data.prediction);
-      Alert.alert("Result", `Filename: ${response.data.filename}\nPrediction: ${JSON.stringify(response.data.prediction)}`);
+      const { filename, classification, waste_material, recyclable, guidelines } = response.data;
+
+      setPrediction({
+        classification,
+        waste_material,
+        recyclable,
+        guidelines,
+      });
+
+      Alert.alert(
+        "Result",
+        `Filename: ${filename}\n\nClassification: ${classification}\nWaste Material: ${waste_material}\nRecyclable: ${recyclable}\nGuidelines: ${guidelines}`
+      );
     } catch (error) {
       console.error("❌ Upload Failed:", error.response?.data || error.message);
       Alert.alert("Upload Failed!", "Something went wrong. Try again.");
@@ -176,7 +188,7 @@ const HomeScreen = ({ navigation }) => {
   if (!fontsLoaded) return null;
 
   const renderProductItem = ({ item }) => {
-    const itemQuantity = quantities[item._id] || 0; // Get the quantity for this item
+    const itemQuantity = quantities[item._id] || 0;
 
     return (
       <View style={styles.productItem}>
@@ -218,16 +230,11 @@ const HomeScreen = ({ navigation }) => {
         backgroundColor="#E0E7EF"
         translucent={true}
       />
-  
+
       <LinearGradient colors={["#E0E7EF", "#D1DAE5"]} style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.searchContainer}>
-            <MaterialIcons
-              name="search"
-              size={20}
-              color="#6B7280"
-              style={styles.searchIcon}
-            />
+            <MaterialIcons name="search" size={20} color="#6B7280" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search products..."
@@ -236,119 +243,118 @@ const HomeScreen = ({ navigation }) => {
               onChangeText={setSearchQuery}
             />
           </View>
-          <TouchableOpacity
-            style={styles.locationButton}
-            onPress={requestLocationPermission}
-          >
+          <TouchableOpacity style={styles.locationButton} onPress={requestLocationPermission}>
             <MaterialIcons name="location-on" size={24} color="#10B981" />
           </TouchableOpacity>
         </View>
       </LinearGradient>
-  
-      {/* Non-scrollable content */}
-      <View style={styles.counterContainer}>
-        {(location || customAddress) && (
-          <View style={styles.locationRow}>
-            <MaterialIcons name="location-pin" size={18} color="#10B981" />
-            {isEditingAddress ? (
-              <TextInput
-                style={styles.addressInput}
-                value={customAddress}
-                onChangeText={setCustomAddress}
-                onSubmitEditing={handleSaveAddress}
-                autoFocus={true}
-                placeholder="Enter your address"
-                placeholderTextColor="#6B7280"
-              />
-            ) : (
-              <Text style={styles.locationText}>
-                {customAddress || "Fetching..."}
-              </Text>
-            )}
-            <TouchableOpacity
-              onPress={() => setIsEditingAddress(!isEditingAddress)}
-            >
-              <MaterialIcons
-                name={isEditingAddress ? "check" : "edit"}
-                size={18}
-                color="#10B981"
-              />
-            </TouchableOpacity>
-          </View>
-        )}
-        <Text style={styles.greetingText}>{greeting}</Text>
-        <Text style={styles.counterText}>Items Scanned</Text>
-        <Text style={styles.counterNumber}>{itemsScanned}</Text>
-        <Text style={styles.dateText}>{getCurrentDate()}</Text>
-      </View>
-  
-      <View style={styles.scannerSection}>
-        <TouchableOpacity
-          style={styles.collapsibleHeader}
-          onPress={() => setIsScannerCollapsed(!isScannerCollapsed)}
-        >
-          <Text style={styles.collapsibleHeaderText}>Scan Item</Text>
-          <MaterialIcons
-            name={isScannerCollapsed ? "expand-more" : "expand-less"}
-            size={28}
-            color="#10B981"
-          />
-        </TouchableOpacity>
-        <Collapsible collapsed={isScannerCollapsed}>
-          <View style={styles.scannerContainer}>
-            <TouchableOpacity
-              style={styles.scannerSpace}
-              onPress={() => setShowScannerOptionsModal(true)}
-            >
-              <MaterialIcons name="camera-alt" size={48} color="#10B981" />
-            </TouchableOpacity>
-            {imageUri && (
-              <View style={styles.imageAddedContainer}>
-                <Text style={styles.imageAddedText}>Image Ready</Text>
-                <TouchableOpacity onPress={removeImage}>
-                  <MaterialIcons name="delete" size={24} color="#EF4444" />
-                </TouchableOpacity>
-              </View>
-            )}
-            <TouchableOpacity
-              style={styles.uploadButton}
-              onPress={uploadImage}
-            >
-              <Text style={styles.uploadButtonText}>Upload</Text>
-            </TouchableOpacity>
-          </View>
-        </Collapsible>
-      </View>
-  
-      {/* Scrollable content (products) */}
-      <View style={styles.shopSection}>
-        <View style={styles.shopHeader}>
-          <Text style={styles.shopSectionTitle}>Eco Shop</Text>
-          <TouchableOpacity onPress={navigateToCart}>
-            <MaterialIcons name="shopping-cart" size={28} color="#10B981" />
-            {cartItems.length > 0 && (
-              <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
-              </View>
-            )}
+
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.counterContainer}>
+          {(location || customAddress) && (
+            <View style={styles.locationRow}>
+              <MaterialIcons name="location-pin" size={18} color="#10B981" />
+              {isEditingAddress ? (
+                <TextInput
+                  style={styles.addressInput}
+                  value={customAddress}
+                  onChangeText={setCustomAddress}
+                  onSubmitEditing={handleSaveAddress}
+                  autoFocus={true}
+                  placeholder="Enter your address"
+                  placeholderTextColor="#6B7280"
+                />
+              ) : (
+                <Text style={styles.locationText}>{customAddress || "Fetching..."}</Text>
+              )}
+              <TouchableOpacity onPress={() => setIsEditingAddress(!isEditingAddress)}>
+                <MaterialIcons
+                  name={isEditingAddress ? "check" : "edit"}
+                  size={18}
+                  color="#10B981"
+                />
+              </TouchableOpacity>
+            </View>
+          )}
+          <Text style={styles.greetingText}>{greeting}</Text>
+          <Text style={styles.counterText}>Items Scanned</Text>
+          <Text style={styles.counterNumber}>{itemsScanned}</Text>
+          <Text style={styles.dateText}>{getCurrentDate()}</Text>
+        </View>
+
+        <View style={styles.scannerSection}>
+          <TouchableOpacity
+            style={styles.collapsibleHeader}
+            onPress={() => setIsScannerCollapsed(!isScannerCollapsed)}
+          >
+            <Text style={styles.collapsibleHeaderText}>Scan Item</Text>
+            <MaterialIcons
+              name={isScannerCollapsed ? "expand-more" : "expand-less"}
+              size={28}
+              color="#10B981"
+            />
+          </TouchableOpacity>
+          <Collapsible collapsed={isScannerCollapsed}>
+            <View style={styles.scannerContainer}>
+              <TouchableOpacity
+                style={styles.scannerSpace}
+                onPress={() => setShowScannerOptionsModal(true)}
+              >
+                <MaterialIcons name="camera-alt" size={48} color="#10B981" />
+              </TouchableOpacity>
+              {imageUri && (
+                <View style={styles.imageAddedContainer}>
+                  <Text style={styles.imageAddedText}>Image Ready</Text>
+                  <TouchableOpacity onPress={removeImage}>
+                    <MaterialIcons name="delete" size={24} color="#EF4444" />
+                  </TouchableOpacity>
+                </View>
+              )}
+              <TouchableOpacity style={styles.uploadButton} onPress={uploadImage}>
+                <Text style={styles.uploadButtonText}>Upload</Text>
+              </TouchableOpacity>
+            </View>
+          </Collapsible>
+        </View>
+
+        <View style={styles.pickupSection}>
+          <TouchableOpacity
+            style={styles.schedulePickupButton}
+            onPress={() => setShowPickupModal(true)}
+          >
+            <Text style={styles.schedulePickupButtonText}>Schedule a Pickup</Text>
           </TouchableOpacity>
         </View>
-        {products.length > 0 ? (
-          <FlatList
-            data={products}
-            renderItem={renderProductItem}
-            keyExtractor={(item) => item._id.toString()}
-            numColumns={3}
-            contentContainerStyle={styles.productGrid}
-            showsVerticalScrollIndicator={false}
-          />
-        ) : (
-          <Text style={styles.noProductsText}>No products to show here.</Text>
-        )}
-      </View>
-  
+
+        <View style={styles.shopSection}>
+          <View style={styles.shopHeader}>
+            <Text style={styles.shopSectionTitle}>Eco Shop</Text>
+            <TouchableOpacity onPress={navigateToCart}>
+              <MaterialIcons name="shopping-cart" size={28} color="#10B981" />
+              {cartItems.length > 0 && (
+                <View style={styles.cartBadge}>
+                  <Text style={styles.cartBadgeText}>{cartItems.length}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+          {products.length > 0 ? (
+            <FlatList
+              data={products}
+              renderItem={renderProductItem}
+              keyExtractor={(item) => item._id.toString()}
+              numColumns={3}
+              contentContainerStyle={styles.productGrid}
+              scrollEnabled={false}
+            />
+          ) : (
+            <Text style={styles.noProductsText}>No products to show here.</Text>
+          )}
+        </View>
+      </ScrollView>
+
       <Navigation />
-  
+
       <Animated.View
         style={[
           styles.chatbotIconContainer,
@@ -359,7 +365,7 @@ const HomeScreen = ({ navigation }) => {
           <MaterialIcons name="smart-toy" size={32} color="#FFFFFF" />
         </TouchableOpacity>
       </Animated.View>
-  
+
       <Modal visible={showModal} transparent animationType="fade">
         <TouchableWithoutFeedback onPress={() => setShowModal(false)}>
           <View style={styles.modalContainer}>
@@ -367,40 +373,25 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.modalTitle}>AI Recycler</Text>
               {prediction && (
                 <ScrollView contentContainerStyle={styles.scrollContent}>
-                  <Text style={styles.modalText}>
-                    Prediction: {JSON.stringify(prediction)}
-                  </Text>
+                  <Text style={styles.modalText}>Prediction: {JSON.stringify(prediction)}</Text>
                 </ScrollView>
               )}
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowModal(false)}
-              >
+              <TouchableOpacity style={styles.closeButton} onPress={() => setShowModal(false)}>
                 <Text style={styles.closeButtonText}>Close</Text>
               </TouchableOpacity>
             </View>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-  
-      <Modal
-        visible={showScannerOptionsModal}
-        transparent
-        animationType="slide"
-      >
+
+      <Modal visible={showScannerOptionsModal} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.scannerOptionsModalContent}>
             <Text style={styles.modalTitle}>Select Option</Text>
-            <TouchableOpacity
-              style={styles.scannerOptionButton}
-              onPress={pickImage}
-            >
+            <TouchableOpacity style={styles.scannerOptionButton} onPress={pickImage}>
               <Text style={styles.scannerOptionText}>Gallery</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.scannerOptionButton}
-              onPress={takePhoto}
-            >
+            <TouchableOpacity style={styles.scannerOptionButton} onPress={takePhoto}>
               <Text style={styles.scannerOptionText}>Camera</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -412,11 +403,36 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+
+      <Modal visible={showPickupModal} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.pickupModalContent}>
+            <Text style={styles.modalTitle}>Schedule a Pickup</Text>
+            <Text style={styles.modalText}>
+              Placeholder: Add your scheduling logic here (e.g., date picker, address input).
+            </Text>
+            <TouchableOpacity
+              style={styles.scheduleButton}
+              onPress={() => {
+                Alert.alert("Pickup Scheduled", "This is a placeholder. Implement your scheduling logic!");
+                setShowPickupModal(false);
+              }}
+            >
+              <Text style={styles.scheduleButtonText}>Confirm Pickup</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowPickupModal(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -576,6 +592,23 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontFamily: "PoppinsBold",
   },
+  pickupSection: {
+    marginHorizontal: 20,
+    marginTop: 15,
+    alignItems: "center",
+  },
+  schedulePickupButton: {
+    backgroundColor: "#10B981",
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    elevation: 5,
+  },
+  schedulePickupButtonText: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    fontFamily: "PoppinsBold",
+  },
   shopSection: {
     marginTop: 25,
     paddingHorizontal: 20,
@@ -638,6 +671,7 @@ const styles = StyleSheet.create({
   },
   productItem: {
     flex: 1,
+    flexGrow: 1,
     margin: 5,
     backgroundColor: "#FFFFFF",
     borderRadius: 15,
@@ -675,6 +709,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#FFFFFF",
     fontFamily: "PoppinsSemiBold",
+  },
+  noProductsText: {
+    fontSize: 18,
+    color: "#EF4444",
+    fontFamily: "PoppinsSemiBold",
+    textAlign: "center",
   },
   chatbotIconContainer: {
     position: "absolute",
@@ -762,6 +802,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cancelButtonText: {
+    fontSize: 18,
+    color: "#FFFFFF",
+    fontFamily: "PoppinsBold",
+  },
+  pickupModalContent: {
+    width: "90%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 25,
+    alignItems: "center",
+  },
+  scheduleButton: {
+    backgroundColor: "#10B981",
+    borderRadius: 25,
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    marginVertical: 10,
+    width: "80%",
+    alignItems: "center",
+  },
+  scheduleButtonText: {
     fontSize: 18,
     color: "#FFFFFF",
     fontFamily: "PoppinsBold",

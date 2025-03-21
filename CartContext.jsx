@@ -5,76 +5,66 @@ export const CartContext = createContext();
 
 // Create the Cart Provider component
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]); // Global state for cart items
-  const [quantities, setQuantities] = useState({}); // Global state for item quantities
+  const [cartItems, setCartItems] = useState([]); // Single source of truth for cart items
 
   // Function to add an item to the cart
   const addToCart = (item) => {
     setCartItems((prev) => {
-      const existingItem = prev.find((cartItem) => cartItem._id === item._id); // Use _id for identification
+      const existingItem = prev.find((cartItem) => cartItem._id === item._id);
       if (existingItem) {
         return prev.map((cartItem) =>
           cartItem._id === item._id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            ? { ...cartItem, quantity: (cartItem.quantity || 0) + 1 }
             : cartItem
         );
       } else {
         return [...prev, { ...item, quantity: 1 }];
       }
     });
-  
-    setQuantities((prev) => ({
-      ...prev,
-      [item._id]: (prev[item._id] || 0) + 1, // Use _id for quantities
-    }));
   };
 
   // Function to update the quantity of an item in the cart
   const updateQuantity = (item, delta) => {
-    const newQuantity = (quantities[item.id] || 0) + delta;
+    setCartItems((prev) => {
+      const currentItem = prev.find((cartItem) => cartItem._id === item._id);
+      const newQuantity = (currentItem?.quantity || 0) + delta;
 
-    if (newQuantity >= 0) {
-      // Update the quantities state
-      setQuantities((prev) => ({
-        ...prev,
-        [item.id]: newQuantity,
-      }));
-
-      // Update the cartItems state
-      setCartItems((prev) => {
-        if (newQuantity === 0) {
-          // If the quantity is 0, remove the item from the cart
-          return prev.filter((cartItem) => cartItem.id !== item.id);
-        } else {
-          // Otherwise, update the item's quantity
-          return prev.map((cartItem) =>
-            cartItem.id === item.id
-              ? { ...cartItem, quantity: newQuantity }
-              : cartItem
-          );
-        }
-      });
-    }
+      if (newQuantity <= 0) {
+        // Remove the item if quantity becomes 0 or negative
+        return prev.filter((cartItem) => cartItem._id !== item._id);
+      } else {
+        // Update the item's quantity
+        return prev.map((cartItem) =>
+          cartItem._id === item._id
+            ? { ...cartItem, quantity: newQuantity }
+            : cartItem
+        );
+      }
+    });
   };
 
   // Function to remove an item from the cart
-  const removeItem = (itemId) => {
-    setCartItems((prev) => prev.filter((cartItem) => cartItem.id !== itemId));
-    setQuantities((prev) => {
-      const newQuantities = { ...prev };
-      delete newQuantities[itemId]; // Remove the item from quantities
-      return newQuantities;
-    });
+  const removeItem = (item) => {
+    console.log("Removing item with _id:", item._id); // Debug log
+    setCartItems((prev) => prev.filter((cartItem) => cartItem._id !== item._id));
   };
+
+  // Derive quantities from cartItems for compatibility with HomeScreen
+  const quantities = cartItems.reduce((acc, item) => {
+    acc[item._id] = item.quantity || 0;
+    return acc;
+  }, {});
 
   // Value to be provided by the context
   const value = {
     cartItems,
-    quantities,
+    quantities, // Kept for HomeScreen compatibility
     addToCart,
     updateQuantity,
-    removeItem, // Include the removeItem function
+    removeItem,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
+
+export default CartProvider;
