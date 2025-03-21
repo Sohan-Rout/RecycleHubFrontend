@@ -4,6 +4,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { CartProvider } from "./CartContext"; // Import the CartProvider
 import HomeScreen from "./HomeScreen"; // Import the HomeScreen
 import CartScreen from "./CartScreen"; // Import the CartScreen
+import RecyclePointScreen from "./RecyclePointScreen";
 
 // Create the stack navigator
 const Stack = createStackNavigator();
@@ -23,6 +24,10 @@ const App = () => {
             component={CartScreen}
             options={{ headerShown: false }}
           />
+          <Stack.Screen 
+            name="RecyclePointScreen" 
+            component={RecyclePointScreen} 
+            options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </CartProvider>

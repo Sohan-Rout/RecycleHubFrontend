@@ -37,6 +37,11 @@
     },
     "updates": {
       "url": "https://u.expo.dev/3ae277a2-5f82-4de9-9f33-edaa5cc8aa18"
+    },
+    "permissions": {
+      "location": {
+        "foreground": "Allow this app to access your location to find nearby recycle points."
+      }
     }
   }
 }

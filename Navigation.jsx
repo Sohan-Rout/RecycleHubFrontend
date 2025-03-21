@@ -2,18 +2,19 @@ import React, { useContext } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { CartContext } from "./CartContext";
-import { useNavigation } from "@react-navigation/native"; // Import useNavigation
+import { useNavigation } from "@react-navigation/native";
 
 const Navigation = () => {
   const { cartItems } = useContext(CartContext);
-  const navigation = useNavigation(); // Use the useNavigation hook
+  const navigation = useNavigation();
 
   return (
     <View style={styles.navigationContainer}>
-      <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate("Home")}>
+      <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate("HomeScreen")}>
         <MaterialIcons name="home" size={24} color="#10B981" />
         <Text style={styles.navText}>Home</Text>
       </TouchableOpacity>
+
       <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate("CartScreen")}>
         <MaterialIcons name="shopping-cart" size={24} color="#6B7280" />
         <Text style={styles.navTextInactive}>Cart</Text>
@@ -23,6 +24,12 @@ const Navigation = () => {
           </View>
         )}
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate("RecyclePointScreen")}>
+        <MaterialIcons name="location-pin" size={24} color="#6B7280" />
+        <Text style={styles.navTextInactive}>Recycle Points</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.navItem}>
         <MaterialIcons name="person" size={24} color="#6B7280" />
         <Text style={styles.navTextInactive}>Profile</Text>
@@ -31,7 +38,6 @@ const Navigation = () => {
   );
 };
 
-// Define the styles
 const styles = StyleSheet.create({
   navigationContainer: {
     flexDirection: "row",
