@@ -39,7 +39,14 @@ const HomeScreen = ({ navigation }) => {
   const [customAddress, setCustomAddress] = useState("");
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [products, setProducts] = useState([]);
-  const [showPickupModal, setShowPickupModal] = useState(false); // New state for pickup modal
+  const [showPickupModal, setShowPickupModal] = useState(false);
+  // New states for pickup form
+  const [pickupDate, setPickupDate] = useState(new Date());
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [isEditingPickupAddress, setIsEditingPickupAddress] = useState(false);
+  const [numberOfArticles, setNumberOfArticles] = useState(1);
+  const [pickupImages, setPickupImages] = useState([]);
+
   const chatbotBounce = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -48,7 +55,7 @@ const HomeScreen = ({ navigation }) => {
     PoppinsSemiBold: Poppins_600SemiBold,
     PoppinsBold: Poppins_700Bold,
   });
-
+  
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -103,13 +110,16 @@ const HomeScreen = ({ navigation }) => {
     });
     if (address.length > 0) {
       const { city, region, country } = address[0];
-      setCustomAddress(`${city}, ${region}, ${country}`);
+      const fullAddress = `${city}, ${region}, ${country}`;
+      setCustomAddress(fullAddress);
+      setPickupAddress(fullAddress); // Set default pickup address
     }
   };
 
   const handleSaveAddress = () => {
     setIsEditingAddress(false);
     Alert.alert("Address Saved", `New address: ${customAddress}`);
+    setPickupAddress(customAddress); // Update pickup address when main address is saved
   };
 
   const pickImage = async () => {
@@ -165,14 +175,7 @@ const HomeScreen = ({ navigation }) => {
       );
 
       const { filename, classification, waste_material, recyclable, guidelines } = response.data;
-
-      setPrediction({
-        classification,
-        waste_material,
-        recyclable,
-        guidelines,
-      });
-
+      setPrediction({ classification, waste_material, recyclable, guidelines });
       Alert.alert(
         "Result",
         `Filename: ${filename}\n\nClassification: ${classification}\nWaste Material: ${waste_material}\nRecyclable: ${recyclable}\nGuidelines: ${guidelines}`
@@ -183,13 +186,40 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  const pickPickupImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setPickupImages((prev) => [...prev, result.assets[0].uri]);
+    }
+  };
+
+  const removePickupImage = (index) => {
+    setPickupImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSchedulePickup = () => {
+    if (!pickupAddress || numberOfArticles < 1) {
+      Alert.alert("Error", "Please provide a valid address and number of articles.");
+      return;
+    }
+    // Here you can add logic to send the pickup request to your backend
+    Alert.alert(
+      "Pickup Scheduled",
+      `Date: ${pickupDate.toDateString()}\nAddress: ${pickupAddress}\nArticles: ${numberOfArticles}\nImages: ${pickupImages.length} uploaded`
+    );
+    setShowPickupModal(false);
+  };
+
   const getCurrentDate = () => new Date().toDateString();
 
   if (!fontsLoaded) return null;
 
   const renderProductItem = ({ item }) => {
     const itemQuantity = quantities[item._id] || 0;
-
     return (
       <View style={styles.productItem}>
         <Image source={{ uri: item.image }} style={styles.productImage} />
@@ -408,16 +438,101 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.modalContainer}>
           <View style={styles.pickupModalContent}>
             <Text style={styles.modalTitle}>Schedule a Pickup</Text>
-            <Text style={styles.modalText}>
-              Placeholder: Add your scheduling logic here (e.g., date picker, address input).
-            </Text>
-            <TouchableOpacity
-              style={styles.scheduleButton}
-              onPress={() => {
-                Alert.alert("Pickup Scheduled", "This is a placeholder. Implement your scheduling logic!");
-                setShowPickupModal(false);
-              }}
-            >
+            <ScrollView style={styles.pickupForm}>
+              {/* Date Selector */}
+              <View style={styles.formField}>
+                <Text style={styles.formLabel}>Pickup Date</Text>
+                <TouchableOpacity
+                  style={styles.dateSelector}
+                  onPress={() => {
+                    // Simulate date picker (replace with a real one if needed)
+                    const newDate = new Date(pickupDate);
+                    newDate.setDate(newDate.getDate() + 1); // Increment by 1 day for demo
+                    setPickupDate(newDate);
+                  }}
+                >
+                  <Text style={styles.dateText}>{pickupDate.toDateString()}</Text>
+                  <MaterialIcons name="calendar-today" size={20} color="#10B981" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Location */}
+              <View style={styles.formField}>
+                <Text style={styles.formLabel}>Pickup Address</Text>
+                <View style={styles.locationRow}>
+                  {isEditingPickupAddress ? (
+                    <TextInput
+                      style={styles.addressInput}
+                      value={pickupAddress}
+                      onChangeText={setPickupAddress}
+                      onSubmitEditing={() => setIsEditingPickupAddress(false)}
+                      autoFocus={true}
+                      placeholder="Enter pickup address"
+                      placeholderTextColor="#6B7280"
+                    />
+                  ) : (
+                    <Text style={styles.locationText}>{pickupAddress || "No address set"}</Text>
+                  )}
+                  <TouchableOpacity onPress={() => setIsEditingPickupAddress(!isEditingPickupAddress)}>
+                    <MaterialIcons
+                      name={isEditingPickupAddress ? "check" : "edit"}
+                      size={18}
+                      color="#10B981"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Number of Articles */}
+              <View style={styles.formField}>
+                <Text style={styles.formLabel}>Number of Articles</Text>
+                <View style={styles.quantityContainer}>
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() => setNumberOfArticles(Math.max(1, numberOfArticles - 1))}
+                  >
+                    <Text style={styles.quantityButtonText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.quantityText}>{numberOfArticles}</Text>
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() => setNumberOfArticles(numberOfArticles + 1)}
+                  >
+                    <Text style={styles.quantityButtonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Image Upload */}
+              <View style={styles.formField}>
+                <Text style={styles.formLabel}>Images of Items</Text>
+                <TouchableOpacity style={styles.uploadImageButton} onPress={pickPickupImage}>
+                  <MaterialIcons name="add-a-photo" size={24} color="#FFFFFF" />
+                  <Text style={styles.uploadImageButtonText}>Add Image</Text>
+                </TouchableOpacity>
+                {pickupImages.length > 0 && (
+                  <FlatList
+                    horizontal
+                    data={pickupImages}
+                    renderItem={({ item, index }) => (
+                      <View style={styles.pickupImageContainer}>
+                        <Image source={{ uri: item }} style={styles.pickupImage} />
+                        <TouchableOpacity
+                          style={styles.removeImageButton}
+                          onPress={() => removePickupImage(index)}
+                        >
+                          <MaterialIcons name="delete" size={20} color="#FFFFFF" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    keyExtractor={(item, index) => index.toString()}
+                    style={styles.pickupImageList}
+                  />
+                )}
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity style={styles.scheduleButton} onPress={handleSchedulePickup}>
               <Text style={styles.scheduleButtonText}>Confirm Pickup</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -811,6 +926,68 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 25,
+    alignItems: "center",
+    maxHeight: "80%", // Limit height to fit screen
+  },
+  pickupForm: {
+    width: "100%",
+    marginBottom: 20,
+  },
+  formField: {
+    marginBottom: 20,
+  },
+  formLabel: {
+    fontSize: 16,
+    color: "#111827",
+    fontFamily: "PoppinsSemiBold",
+    marginBottom: 8,
+  },
+  dateSelector: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#10B981",
+  },
+  uploadImageButton: {
+    flexDirection: "row",
+    backgroundColor: "#10B981",
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  uploadImageButtonText: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    fontFamily: "PoppinsBold",
+    marginLeft: 10,
+  },
+  pickupImageList: {
+    marginTop: 10,
+  },
+  pickupImageContainer: {
+    position: "relative",
+    marginRight: 10,
+  },
+  pickupImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+  },
+  removeImageButton: {
+    position: "absolute",
+    top: 5,
+    right: 5,
+    backgroundColor: "#EF4444",
+    borderRadius: 15,
+    width: 25,
+    height: 25,
+    justifyContent: "center",
     alignItems: "center",
   },
   scheduleButton: {

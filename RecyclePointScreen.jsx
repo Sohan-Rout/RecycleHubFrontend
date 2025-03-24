@@ -14,19 +14,16 @@ const RecyclePointScreen = ({ navigation }) => {
 
   useEffect(() => {
     (async () => {
-      // Request location permissions
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         setErrorMsg("Permission to access location was denied.");
         return;
       }
 
-      // Get user's current location
       let location = await Location.getCurrentPositionAsync({});
       const { latitude, longitude } = location.coords;
       setUserLocation({ latitude, longitude });
 
-      // Fetch recycle points from the server
       try {
         const response = await axios.get("https://recyclehub-production.up.railway.app/api/recycle-points", {
           params: { lat: latitude, lng: longitude },
@@ -38,7 +35,6 @@ const RecyclePointScreen = ({ navigation }) => {
         }
         setRecyclePoints(points);
 
-        // Find the nearest recycle point
         const nearest = findNearestRecyclePoint({ latitude, longitude }, points);
         setNearestPoint(nearest);
       } catch (error) {
@@ -48,19 +44,17 @@ const RecyclePointScreen = ({ navigation }) => {
     })();
   }, []);
 
-  // Function to calculate distance between two coordinates (Haversine formula)
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Earth's radius in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * (Math.PI / 180);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in km
+    return R * c;
   };
 
-  // Find the nearest recycle point
   const findNearestRecyclePoint = (userCoords, points) => {
     if (!points || points.length === 0) return null;
     return points.reduce((closest, point) => {
@@ -69,7 +63,6 @@ const RecyclePointScreen = ({ navigation }) => {
     }, { distance: Infinity });
   };
 
-  // Start navigation to the nearest recycle point
   const startNavigation = () => {
     if (!nearestPoint) {
       Alert.alert("Error", "No recycle point selected yet.");
@@ -175,11 +168,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   mapContainer: {
-    flex: 1,
+    flex: 1, // Take up remaining space
   },
   map: {
     width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height - 150,
+    flex: 0.7, // Map takes 70% of the mapContainer height
   },
   content: {
     flex: 1,
@@ -200,23 +193,28 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   infoContainer: {
+    flex: 0.3, // Info section takes 30% of the mapContainer height
     padding: 15,
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
     borderTopColor: "#E0E7EF",
-    alignItems: "center",
+    justifyContent: "center", // Center content vertically
+    alignItems: "center", // Center content horizontally
   },
   infoText: {
     fontSize: 16,
     color: "#111827",
     fontFamily: "PoppinsSemiBold",
-    marginBottom: 10,
+    marginBottom: 15, // Increased margin for spacing
+    textAlign: "center",
   },
   navigateButton: {
     backgroundColor: "#10B981",
     borderRadius: 20,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 30,
+    width: "80%", // Button width relative to infoContainer
+    alignItems: "center",
   },
   navigateButtonText: {
     fontSize: 16,
