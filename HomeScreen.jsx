@@ -55,7 +55,7 @@ const HomeScreen = ({ navigation }) => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("https://recyclehub.onrender.com/api/products");
+      const response = await axios.get("https://recyclehub-production.up.railway.app/api/products");
       setProducts(response.data);
     } catch (error) {
       console.error("❌ Failed to fetch products:", error);
@@ -155,7 +155,7 @@ const HomeScreen = ({ navigation }) => {
 
     try {
       const response = await axios.post(
-        "https://recyclehub.onrender.com/api/upload",
+        "https://recyclehub-production.up.railway.app/api/upload",
         formData,
         {
           headers: {

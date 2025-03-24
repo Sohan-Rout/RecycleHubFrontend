@@ -28,7 +28,7 @@ const RecyclePointScreen = ({ navigation }) => {
 
       // Fetch recycle points from the server
       try {
-        const response = await axios.get("https://recyclehub.onrender.com/api/recycle-points", {
+        const response = await axios.get("https://recyclehub-production.up.railway.app/api/recycle-points", {
           params: { lat: latitude, lng: longitude },
         });
         const points = response.data;
