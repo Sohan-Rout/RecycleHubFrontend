@@ -98,7 +98,7 @@ const CartScreen = ({ navigation }) => {
         <View style={styles.emptyCartContainer}>
           <MaterialIcons name="shopping-cart" size={80} color="#9CA3AF" />
           <Text style={styles.emptyCartText}>Your cart is empty</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("HomeScreen")}>
+          <TouchableOpacity onPress={() => navigation.navigate("Home")}>
             <Text style={[styles.checkoutText, { color: "#10B981" }]}>
               Start Shopping
             </Text>

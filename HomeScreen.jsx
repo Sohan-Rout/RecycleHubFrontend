@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
   StyleSheet,
   StatusBar,
-  Animated,
   Modal,
   TouchableOpacity,
   ScrollView,
@@ -28,7 +27,6 @@ import Navigation from "./Navigation";
 const HomeScreen = ({ navigation }) => {
   const { cartItems, quantities, addToCart, updateQuantity } = useContext(CartContext);
   const [imageUri, setImageUri] = useState(null);
-  const [showModal, setShowModal] = useState(false);
   const [showScannerOptionsModal, setShowScannerOptionsModal] = useState(false);
   const [isScannerCollapsed, setIsScannerCollapsed] = useState(true);
   const [prediction, setPrediction] = useState(null);
@@ -40,22 +38,18 @@ const HomeScreen = ({ navigation }) => {
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [products, setProducts] = useState([]);
   const [showPickupModal, setShowPickupModal] = useState(false);
-  // New states for pickup form
   const [pickupDate, setPickupDate] = useState(new Date());
   const [pickupAddress, setPickupAddress] = useState("");
   const [isEditingPickupAddress, setIsEditingPickupAddress] = useState(false);
   const [numberOfArticles, setNumberOfArticles] = useState(1);
   const [pickupImages, setPickupImages] = useState([]);
 
-  const chatbotBounce = useRef(new Animated.Value(0)).current;
-  const scrollY = useRef(new Animated.Value(0)).current;
-
   const [fontsLoaded] = useFonts({
     Poppins: Poppins_400Regular,
     PoppinsSemiBold: Poppins_600SemiBold,
     PoppinsBold: Poppins_700Bold,
   });
-  
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -87,13 +81,6 @@ const HomeScreen = ({ navigation }) => {
     if (hour < 12) setGreeting("Good Morning");
     else if (hour < 18) setGreeting("Good Afternoon");
     else setGreeting("Good Evening");
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(chatbotBounce, { toValue: -10, duration: 500, useNativeDriver: true }),
-        Animated.timing(chatbotBounce, { toValue: 0, duration: 500, useNativeDriver: true }),
-      ])
-    ).start();
   }, []);
 
   const requestLocationPermission = async () => {
@@ -112,14 +99,14 @@ const HomeScreen = ({ navigation }) => {
       const { city, region, country } = address[0];
       const fullAddress = `${city}, ${region}, ${country}`;
       setCustomAddress(fullAddress);
-      setPickupAddress(fullAddress); // Set default pickup address
+      setPickupAddress(fullAddress);
     }
   };
 
   const handleSaveAddress = () => {
     setIsEditingAddress(false);
     Alert.alert("Address Saved", `New address: ${customAddress}`);
-    setPickupAddress(customAddress); // Update pickup address when main address is saved
+    setPickupAddress(customAddress);
   };
 
   const pickImage = async () => {
@@ -206,7 +193,6 @@ const HomeScreen = ({ navigation }) => {
       Alert.alert("Error", "Please provide a valid address and number of articles.");
       return;
     }
-    // Here you can add logic to send the pickup request to your backend
     Alert.alert(
       "Pickup Scheduled",
       `Date: ${pickupDate.toDateString()}\nAddress: ${pickupAddress}\nArticles: ${numberOfArticles}\nImages: ${pickupImages.length} uploaded`
@@ -385,35 +371,6 @@ const HomeScreen = ({ navigation }) => {
 
       <Navigation />
 
-      <Animated.View
-        style={[
-          styles.chatbotIconContainer,
-          { transform: [{ translateY: chatbotBounce }] },
-        ]}
-      >
-        <TouchableOpacity onPress={() => setShowModal(true)}>
-          <MaterialIcons name="smart-toy" size={32} color="#FFFFFF" />
-        </TouchableOpacity>
-      </Animated.View>
-
-      <Modal visible={showModal} transparent animationType="fade">
-        <TouchableWithoutFeedback onPress={() => setShowModal(false)}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>AI Recycler</Text>
-              {prediction && (
-                <ScrollView contentContainerStyle={styles.scrollContent}>
-                  <Text style={styles.modalText}>Prediction: {JSON.stringify(prediction)}</Text>
-                </ScrollView>
-              )}
-              <TouchableOpacity style={styles.closeButton} onPress={() => setShowModal(false)}>
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
       <Modal visible={showScannerOptionsModal} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.scannerOptionsModalContent}>
@@ -439,15 +396,13 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.pickupModalContent}>
             <Text style={styles.modalTitle}>Schedule a Pickup</Text>
             <ScrollView style={styles.pickupForm}>
-              {/* Date Selector */}
               <View style={styles.formField}>
                 <Text style={styles.formLabel}>Pickup Date</Text>
                 <TouchableOpacity
                   style={styles.dateSelector}
                   onPress={() => {
-                    // Simulate date picker (replace with a real one if needed)
                     const newDate = new Date(pickupDate);
-                    newDate.setDate(newDate.getDate() + 1); // Increment by 1 day for demo
+                    newDate.setDate(newDate.getDate() + 1);
                     setPickupDate(newDate);
                   }}
                 >
@@ -456,7 +411,6 @@ const HomeScreen = ({ navigation }) => {
                 </TouchableOpacity>
               </View>
 
-              {/* Location */}
               <View style={styles.formField}>
                 <Text style={styles.formLabel}>Pickup Address</Text>
                 <View style={styles.locationRow}>
@@ -483,7 +437,6 @@ const HomeScreen = ({ navigation }) => {
                 </View>
               </View>
 
-              {/* Number of Articles */}
               <View style={styles.formField}>
                 <Text style={styles.formLabel}>Number of Articles</Text>
                 <View style={styles.quantityContainer}>
@@ -503,7 +456,6 @@ const HomeScreen = ({ navigation }) => {
                 </View>
               </View>
 
-              {/* Image Upload */}
               <View style={styles.formField}>
                 <Text style={styles.formLabel}>Images of Items</Text>
                 <TouchableOpacity style={styles.uploadImageButton} onPress={pickPickupImage}>
@@ -831,60 +783,17 @@ const styles = StyleSheet.create({
     fontFamily: "PoppinsSemiBold",
     textAlign: "center",
   },
-  chatbotIconContainer: {
-    position: "absolute",
-    bottom: 80,
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#10B981",
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 10,
-  },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  modalContent: {
-    width: "90%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 25,
-    alignItems: "center",
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   modalTitle: {
     fontSize: 24,
     color: "#111827",
     fontFamily: "PoppinsBold",
     marginBottom: 15,
-  },
-  modalText: {
-    fontSize: 16,
-    color: "#6B7280",
-    fontFamily: "Poppins",
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  closeButton: {
-    backgroundColor: "#10B981",
-    borderRadius: 25,
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    marginTop: 20,
-  },
-  closeButtonText: {
-    fontSize: 18,
-    color: "#FFFFFF",
-    fontFamily: "PoppinsBold",
   },
   scannerOptionsModalContent: {
     width: "90%",
@@ -927,7 +836,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 25,
     alignItems: "center",
-    maxHeight: "80%", // Limit height to fit screen
+    maxHeight: "80%",
   },
   pickupForm: {
     width: "100%",
@@ -951,6 +860,11 @@ const styles = StyleSheet.create({
     padding: 10,
     borderWidth: 1,
     borderColor: "#10B981",
+  },
+  dateText: {
+    fontSize: 16,
+    color: "#111827",
+    fontFamily: "Poppins",
   },
   uploadImageButton: {
     flexDirection: "row",
