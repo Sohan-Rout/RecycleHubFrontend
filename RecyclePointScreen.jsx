@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert, Dimensions } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert, Dimensions, Platform } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import axios from "axios";
+
+const API_BASE_URL = "https://recyclehub-production.up.railway.app/api";
 
 const RecyclePointScreen = ({ navigation }) => {
   const [userLocation, setUserLocation] = useState(null);
@@ -19,26 +21,24 @@ const RecyclePointScreen = ({ navigation }) => {
         setErrorMsg("Permission to access location was denied.");
         return;
       }
-
+  
       let location = await Location.getCurrentPositionAsync({});
+      if (!location || !location.coords) {
+        setErrorMsg("Failed to fetch location. Try again.");
+        return;
+      }
+  
       const { latitude, longitude } = location.coords;
       setUserLocation({ latitude, longitude });
-
+  
       try {
-        const response = await axios.get("https://recyclehub-production.up.railway.app/api/recycle-points", {
+        const response = await axios.get(`${API_BASE_URL}/recycle-points`, {
           params: { lat: latitude, lng: longitude },
         });
-        const points = response.data;
-        if (points.length === 0) {
-          setErrorMsg("No recycle points found.");
-          return;
-        }
-        setRecyclePoints(points);
-
-        const nearest = findNearestRecyclePoint({ latitude, longitude }, points);
+        setRecyclePoints(response.data);
+        const nearest = findNearestRecyclePoint({ latitude, longitude }, response.data);
         setNearestPoint(nearest);
       } catch (error) {
-        console.error("❌ Failed to fetch recycle points:", error);
         setErrorMsg("Failed to load recycle points. Please try again.");
       }
     })();
@@ -50,7 +50,8 @@ const RecyclePointScreen = ({ navigation }) => {
     const dLon = (lon2 - lon1) * (Math.PI / 180);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
@@ -63,21 +64,12 @@ const RecyclePointScreen = ({ navigation }) => {
     }, { distance: Infinity });
   };
 
-  const startNavigation = () => {
-    if (!nearestPoint) {
-      Alert.alert("Error", "No recycle point selected yet.");
-      return;
-    }
-
+  const openMaps = (latitude, longitude) => {
     const url = Platform.select({
-      ios: `maps://?daddr=${nearestPoint.latitude},${nearestPoint.longitude}&dirflg=d`,
-      android: `google.navigation:q=${nearestPoint.latitude},${nearestPoint.longitude}`,
+      ios: `maps://?daddr=${latitude},${longitude}&dirflg=d`,
+      android: `google.navigation:q=${latitude},${longitude}`,
     });
-
-    Linking.openURL(url).catch((err) => {
-      Alert.alert("Error", "Unable to open maps for navigation.");
-      console.error("Navigation error:", err);
-    });
+    Linking.openURL(url).catch(() => Alert.alert("Error", "Unable to open maps for navigation."));
   };
 
   return (
@@ -88,16 +80,16 @@ const RecyclePointScreen = ({ navigation }) => {
             <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Nearby Recycle Points</Text>
-          <View style={{ width: 24 }} />
+          <View style={{ width: 24 }} /> {/* Spacer for symmetry */}
         </View>
       </LinearGradient>
 
       {errorMsg ? (
-        <View style={styles.content}>
+        <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{errorMsg}</Text>
         </View>
       ) : !userLocation ? (
-        <View style={styles.content}>
+        <View style={styles.loadingContainer}>
           <Text style={styles.placeholderText}>Loading your location...</Text>
         </View>
       ) : (
@@ -118,24 +110,28 @@ const RecyclePointScreen = ({ navigation }) => {
                 coordinate={{ latitude: point.latitude, longitude: point.longitude }}
                 title={point.name}
                 pinColor={point.id === nearestPoint?.id ? "#EF4444" : "#10B981"}
+                onPress={() => openMaps(point.latitude, point.longitude)}
               />
             ))}
           </MapView>
 
-          {nearestPoint ? (
-            <View style={styles.infoContainer}>
-              <Text style={styles.infoText}>
-                Nearest: {nearestPoint.name} ({nearestPoint.distance.toFixed(2)} km)
-              </Text>
-              <TouchableOpacity style={styles.navigateButton} onPress={startNavigation}>
-                <Text style={styles.navigateButtonText}>Start Navigation</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.infoContainer}>
+          <View style={styles.infoContainer}>
+            {nearestPoint ? (
+              <>
+                <Text style={styles.infoText}>
+                  Nearest: {nearestPoint.name} ({nearestPoint.distance.toFixed(2)} km)
+                </Text>
+                <TouchableOpacity
+                  style={styles.navigateButton}
+                  onPress={() => openMaps(nearestPoint.latitude, nearestPoint.longitude)}
+                >
+                  <Text style={styles.navigateButtonText}>Start Navigation</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
               <Text style={styles.infoText}>No nearby recycle points found.</Text>
-            </View>
-          )}
+            )}
+          </View>
         </View>
       )}
     </View>
@@ -148,7 +144,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F4F6",
   },
   header: {
-    paddingTop: 50,
+    paddingTop: 50, // Original header padding
     paddingBottom: 20,
     paddingHorizontal: 20,
     borderBottomLeftRadius: 20,
@@ -162,19 +158,63 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontFamily: "PoppinsBold",
+    fontWeight: "bold",
     color: "#FFFFFF",
-    flex: 1,
     textAlign: "center",
+    flex: 1,
   },
   mapContainer: {
-    flex: 1, // Take up remaining space
+    flex: 1,
+    justifyContent: "flex-end", // Push infoContainer to the bottom
   },
   map: {
     width: Dimensions.get("window").width,
-    flex: 0.7, // Map takes 70% of the mapContainer height
+    height: "70%", // Map takes 70% of the screen height
   },
-  content: {
+  infoContainer: {
+    padding: 20,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    height: "30%", // Info section takes 30% of the screen height
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  infoText: {
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 15, // Space between text and button
+  },
+  navigateButton: {
+    backgroundColor: "#10B981",
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    elevation: 2,
+  },
+  navigateButtonText: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    fontWeight: "bold",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#EF4444",
+    textAlign: "center",
+  },
+  loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -183,43 +223,7 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 16,
     color: "#6B7280",
-    fontFamily: "Poppins",
     textAlign: "center",
-  },
-  errorText: {
-    fontSize: 16,
-    color: "#EF4444",
-    fontFamily: "Poppins",
-    textAlign: "center",
-  },
-  infoContainer: {
-    flex: 0.3, // Info section takes 30% of the mapContainer height
-    padding: 15,
-    backgroundColor: "#FFFFFF",
-    borderTopWidth: 1,
-    borderTopColor: "#E0E7EF",
-    justifyContent: "center", // Center content vertically
-    alignItems: "center", // Center content horizontally
-  },
-  infoText: {
-    fontSize: 16,
-    color: "#111827",
-    fontFamily: "PoppinsSemiBold",
-    marginBottom: 15, // Increased margin for spacing
-    textAlign: "center",
-  },
-  navigateButton: {
-    backgroundColor: "#10B981",
-    borderRadius: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    width: "80%", // Button width relative to infoContainer
-    alignItems: "center",
-  },
-  navigateButtonText: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    fontFamily: "PoppinsBold",
   },
 });
 
