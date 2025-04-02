@@ -23,6 +23,7 @@ import { useFonts, Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold } fr
 import { LinearGradient } from "expo-linear-gradient";
 import { CartContext } from "./CartContext";
 import Navigation from "./Navigation";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const HomeScreen = ({ navigation }) => {
   const { cartItems, quantities, addToCart, updateQuantity } = useContext(CartContext);
@@ -43,6 +44,7 @@ const HomeScreen = ({ navigation }) => {
   const [isEditingPickupAddress, setIsEditingPickupAddress] = useState(false);
   const [numberOfArticles, setNumberOfArticles] = useState(1);
   const [pickupImages, setPickupImages] = useState([]);
+  const [showDatePicker, setShowDatePicker] = useState(false); // Added for date picker visibility
 
   const [fontsLoaded] = useFonts({
     Poppins: Poppins_400Regular,
@@ -198,6 +200,12 @@ const HomeScreen = ({ navigation }) => {
       `Date: ${pickupDate.toDateString()}\nAddress: ${pickupAddress}\nArticles: ${numberOfArticles}\nImages: ${pickupImages.length} uploaded`
     );
     setShowPickupModal(false);
+  };
+
+  const onDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || pickupDate;
+    setShowDatePicker(false); // Hide picker after selection
+    setPickupDate(currentDate);
   };
 
   const getCurrentDate = () => new Date().toDateString();
@@ -400,15 +408,20 @@ const HomeScreen = ({ navigation }) => {
                 <Text style={styles.formLabel}>Pickup Date</Text>
                 <TouchableOpacity
                   style={styles.dateSelector}
-                  onPress={() => {
-                    const newDate = new Date(pickupDate);
-                    newDate.setDate(newDate.getDate() + 1);
-                    setPickupDate(newDate);
-                  }}
+                  onPress={() => setShowDatePicker(true)} // Show date picker on press
                 >
                   <Text style={styles.dateText}>{pickupDate.toDateString()}</Text>
                   <MaterialIcons name="calendar-today" size={20} color="#10B981" />
                 </TouchableOpacity>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={pickupDate}
+                    mode="date"
+                    display="default" // "calendar" on iOS, spinner on Android by default
+                    onChange={onDateChange}
+                    minimumDate={new Date()} // Prevent selecting past dates
+                  />
+                )}
               </View>
 
               <View style={styles.formField}>
