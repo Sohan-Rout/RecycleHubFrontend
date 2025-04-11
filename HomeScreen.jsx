@@ -23,6 +23,7 @@ import { useFonts, Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold } fr
 import { LinearGradient } from "expo-linear-gradient";
 import { CartContext } from "./CartContext";
 import Navigation from "./Navigation";
+import CarbonEstimate from "./CarbonEstimate";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 const HomeScreen = ({ navigation }) => {
@@ -30,6 +31,7 @@ const HomeScreen = ({ navigation }) => {
   const [imageUri, setImageUri] = useState(null);
   const [showScannerOptionsModal, setShowScannerOptionsModal] = useState(false);
   const [isScannerCollapsed, setIsScannerCollapsed] = useState(true);
+  const [isCarbonCollapsed, setIsCarbonCollapsed] = useState(true); // New state for carbon estimate collapsible
   const [prediction, setPrediction] = useState(null);
   const [itemsScanned, setItemsScanned] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,7 +46,7 @@ const HomeScreen = ({ navigation }) => {
   const [isEditingPickupAddress, setIsEditingPickupAddress] = useState(false);
   const [numberOfArticles, setNumberOfArticles] = useState(1);
   const [pickupImages, setPickupImages] = useState([]);
-  const [showDatePicker, setShowDatePicker] = useState(false); // Added for date picker visibility
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Poppins: Poppins_400Regular,
@@ -204,7 +206,7 @@ const HomeScreen = ({ navigation }) => {
 
   const onDateChange = (event, selectedDate) => {
     const currentDate = selectedDate || pickupDate;
-    setShowDatePicker(false); // Hide picker after selection
+    setShowDatePicker(false);
     setPickupDate(currentDate);
   };
 
@@ -341,6 +343,26 @@ const HomeScreen = ({ navigation }) => {
           </Collapsible>
         </View>
 
+        {/* New Carbon Estimate Section */}
+        <View style={styles.carbonSection}>
+          <TouchableOpacity
+            style={styles.collapsibleHeader}
+            onPress={() => setIsCarbonCollapsed(!isCarbonCollapsed)}
+          >
+            <Text style={styles.collapsibleHeaderText}>Carbon Footprint Estimate</Text>
+            <MaterialIcons
+              name={isCarbonCollapsed ? "expand-more" : "expand-less"}
+              size={28}
+              color="#10B981"
+            />
+          </TouchableOpacity>
+          <Collapsible collapsed={isCarbonCollapsed}>
+            <View style={styles.carbonContainer}>
+              <CarbonEstimate />
+            </View>
+          </Collapsible>
+        </View>
+
         <View style={styles.pickupSection}>
           <TouchableOpacity
             style={styles.schedulePickupButton}
@@ -408,7 +430,7 @@ const HomeScreen = ({ navigation }) => {
                 <Text style={styles.formLabel}>Pickup Date</Text>
                 <TouchableOpacity
                   style={styles.dateSelector}
-                  onPress={() => setShowDatePicker(true)} // Show date picker on press
+                  onPress={() => setShowDatePicker(true)}
                 >
                   <Text style={styles.dateText}>{pickupDate.toDateString()}</Text>
                   <MaterialIcons name="calendar-today" size={20} color="#10B981" />
@@ -417,9 +439,9 @@ const HomeScreen = ({ navigation }) => {
                   <DateTimePicker
                     value={pickupDate}
                     mode="date"
-                    display="default" // "calendar" on iOS, spinner on Android by default
+                    display="default"
                     onChange={onDateChange}
-                    minimumDate={new Date()} // Prevent selecting past dates
+                    minimumDate={new Date()}
                   />
                 )}
               </View>
@@ -619,6 +641,14 @@ const styles = StyleSheet.create({
     elevation: 5,
     backgroundColor: "#FFFFFF",
   },
+  carbonSection: {
+    marginHorizontal: 20,
+    marginTop: 15,
+    borderRadius: 20,
+    overflow: "hidden",
+    elevation: 5,
+    backgroundColor: "#FFFFFF",
+  },
   collapsibleHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -632,6 +662,12 @@ const styles = StyleSheet.create({
     fontFamily: "PoppinsBold",
   },
   scannerContainer: {
+    padding: 20,
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    minHeight: 300,
+  },
+  carbonContainer: {
     padding: 20,
     alignItems: "center",
     backgroundColor: "#FFFFFF",
