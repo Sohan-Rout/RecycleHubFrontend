@@ -13,6 +13,8 @@ import { useFonts, Poppins_400Regular, Poppins_600SemiBold, Poppins_700Bold } fr
 
 const CarbonEstimate = () => {
   const [distance, setDistance] = useState('');
+  const [make, setMake] = useState('');
+  const [model, setModel] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -24,6 +26,19 @@ const CarbonEstimate = () => {
   });
 
   const handleEstimate = async () => {
+    if (!distance || isNaN(Number(distance)) || Number(distance) <= 0) {
+      setError('Please enter a valid distance');
+      return;
+    }
+    if (!make.trim()) {
+      setError('Please enter a vehicle make');
+      return;
+    }
+    if (!model.trim()) {
+      setError('Please enter a vehicle model');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setResult(null);
@@ -31,17 +46,16 @@ const CarbonEstimate = () => {
     try {
       const res = await axios.post('https://recyclehub-production.up.railway.app/api/carbon', {
         cluster_name: 'VE-Oct-2022',
-        vehicle_type: 'Car-Type-Supermini',
-        fuel_type: 'petrol',
-        distance_value: Number(distance),
         distance_unit: 'km',
-        include_wtt: 'N',
+        distance_value: Number(distance),
+        vehicle_make: make,
+        vehicle_model: model,
       });
 
       setResult(res.data.data);
     } catch (err) {
       console.log(err);
-      setError('Something went wrong');
+      setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -51,31 +65,51 @@ const CarbonEstimate = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Carbon Emission Estimator</Text>
+      <Text style={styles.title}>Carbon Emission</Text>
 
       <View style={styles.inputContainer}>
         <MaterialIcons name="directions-car" size={20} color="#6B7280" style={styles.inputIcon} />
         <TextInput
-          placeholder="Enter Distance (km)"
-          placeholderTextColor="#6B7280"
-          value={distance}
-          onChangeText={setDistance}
-          keyboardType="numeric"
           style={styles.input}
+          placeholder="Vehicle Make"
+          placeholderTextColor="#6B7280"
+          value={make}
+          onChangeText={setMake}
         />
       </View>
 
-      <TouchableOpacity style={styles.estimateButton} onPress={handleEstimate}>
-        <Text style={styles.estimateButtonText}>Estimate</Text>
-      </TouchableOpacity>
+      <View style={styles.inputContainer}>
+        <MaterialIcons name="directions-car-filled" size={20} color="#6B7280" style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Vehicle Model"
+          placeholderTextColor="#6B7280"
+          value={model}
+          onChangeText={setModel}
+        />
+      </View>
 
-      {loading && <ActivityIndicator size="large" color="#10B981" style={styles.loader} />}
+      <View style={styles.inputContainer}>
+        <MaterialIcons name="speed" size={20} color="#6B7280" style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Distance in KM"
+          placeholderTextColor="#6B7280"
+          keyboardType="numeric"
+          value={distance}
+          onChangeText={setDistance}
+        />
+      </View>
+
+      <TouchableOpacity style={styles.button} onPress={handleEstimate} disabled={loading}>
+        <Text style={styles.buttonText}>{loading ? 'Estimating...' : 'Estimate'}</Text>
+      </TouchableOpacity>
 
       {error && <Text style={styles.error}>{error}</Text>}
 
       {result && (
-        <View style={styles.resultBox}>
-          <Text style={styles.resultLabel}>Estimated CO2 Emission:</Text>
+        <View style={styles.resultContainer}>
+          <Text style={styles.resultLabel}>CO2 Emission:</Text>
           <Text style={styles.resultValue}>{result.co2e_kg} KG CO2</Text>
         </View>
       )}
@@ -86,7 +120,6 @@ const CarbonEstimate = () => {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    justifyContent: 'center',
     padding: 20,
     backgroundColor: '#FFFFFF',
     borderRadius: 15,
@@ -98,6 +131,7 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontFamily: 'PoppinsBold',
     marginBottom: 20,
+    textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -107,7 +141,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#10B981',
     paddingHorizontal: 12,
-    marginBottom: 20,
+    marginBottom: 15,
     width: '100%',
     elevation: 3,
   },
@@ -121,29 +155,29 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins',
     paddingVertical: 10,
   },
-  estimateButton: {
+  button: {
     backgroundColor: '#10B981',
     borderRadius: 20,
     paddingVertical: 12,
     paddingHorizontal: 30,
     elevation: 3,
+    alignItems: 'center',
+    width: '100%',
+    marginTop: 10,
   },
-  estimateButtonText: {
+  buttonText: {
     fontSize: 16,
     color: '#FFFFFF',
     fontFamily: 'PoppinsBold',
-  },
-  loader: {
-    marginVertical: 20,
   },
   error: {
     fontSize: 14,
     color: '#EF4444',
     fontFamily: 'PoppinsSemiBold',
-    marginTop: 10,
+    marginTop: 15,
     textAlign: 'center',
   },
-  resultBox: {
+  resultContainer: {
     marginTop: 20,
     padding: 15,
     backgroundColor: '#F9FAFB',

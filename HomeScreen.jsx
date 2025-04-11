@@ -394,7 +394,7 @@ const HomeScreen = ({ navigation }) => {
               scrollEnabled={false}
             />
           ) : (
-            <Text style={styles.noProductsText}>No products to show here.</Text>
+            <Text style={styles.noProductsText}>New products coming soon!</Text>
           )}
         </View>
       </ScrollView>
@@ -828,7 +828,7 @@ const styles = StyleSheet.create({
   },
   noProductsText: {
     fontSize: 18,
-    color: "#EF4444",
+    color: "#F97316",
     fontFamily: "PoppinsSemiBold",
     textAlign: "center",
   },
